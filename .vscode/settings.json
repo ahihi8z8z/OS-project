@@ -2,6 +2,7 @@
     "files.associations": {
         "sysinfo.h": "c",
         "unistd.h": "c",
-        "readproc.h": "c"
+        "readproc.h": "c",
+        "stat.h": "c"
     }
 }
