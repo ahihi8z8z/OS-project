@@ -11,7 +11,7 @@ const char resultFile[] = "time_pipe.txt";
 int main() {
    int pipefds[2];
    int returnstatus;
-   int pid;
+   int writeProcess;
    char buf[contentLen];
 
    returnstatus = pipe(pipefds);
@@ -19,37 +19,43 @@ int main() {
       printf("Unable to create pipe\n");
       return 1;
    }
-   pid = fork();
+   writeProcess = fork();
    
    // Child process
-   if (pid == 0) {
+   if (writeProcess == 0) {
+
+    struct timespec wStart, wStop;
+    clock_gettime(CLOCK_MONOTONIC, &wStart);
+    write(pipefds[1], content, contentLen);
+    clock_gettime(CLOCK_MONOTONIC, &wStop);
+
+    close(pipefds[1]);
+
+    FILE* result = fopen(resultFile,"a+");
+    fprintf(result,"(1w %ld %ld)\n", wStart.tv_sec, wStart.tv_nsec);
+    fprintf(result,"(2w %ld %ld)\n", wStop.tv_sec, wStop.tv_nsec);
+    fclose(result);
+
+   } else {
+     //Parent process
     struct timespec rStart, rStop;
     clock_gettime(CLOCK_MONOTONIC, &rStart);
     read(pipefds[0], buf, contentLen);
     clock_gettime(CLOCK_MONOTONIC, &rStop);
 
+    close(pipefds[0]);
+
     if (strcmp(buf, content) == 0) {
         // ghi ket qua
         FILE* result = fopen(resultFile,"a+");
-        fprintf(result,"Time process 2 start read from file: %ld second + %ld nanosecond \n", rStart.tv_sec, rStart.tv_nsec);
-        fprintf(result,"Time process 2 stop read from file: %ld second + %ld nanosecond \n\n", rStop.tv_sec, rStop.tv_nsec);
+        fprintf(result,"(1r %ld %ld)\n", rStart.tv_sec, rStart.tv_nsec);
+        fprintf(result,"(1r %ld %ld)\n", rStop.tv_sec, rStop.tv_nsec);
         fclose(result);
     } else {
         FILE* result = fopen(resultFile,"a+");
-        fprintf(result,"doc sai \n\n");
+        fprintf(result,"doc sai \n");
         fclose(result);
     }
-
-   } else { //Parent process
-        struct timespec wStart, wStop;
-        clock_gettime(CLOCK_MONOTONIC, &wStart);
-        write(pipefds[1], content, contentLen);
-        clock_gettime(CLOCK_MONOTONIC, &wStop);
-
-        FILE* result = fopen(resultFile,"a+");
-        fprintf(result,"Time process 1 start write to file: %ld second + %ld nanosecond \n", wStart.tv_sec, wStart.tv_nsec);
-        fprintf(result,"Time process 1 stop write to file: %ld second + %ld nanosecond \n\n", wStop.tv_sec, wStop.tv_nsec);
-        fclose(result);
    }
    return 0;
 }
