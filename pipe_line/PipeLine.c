@@ -8,22 +8,7 @@ size_t contentLen  = sizeof(content)/sizeof(content[0]) ;
 char fileName[] = "test.txt";
 const char resultFile[] = "time_pipe.txt";
 
-int main() {
-   int pipefds[2];
-   int returnstatus;
-   int writeProcess;
-   char buf[contentLen];
-
-   returnstatus = pipe(pipefds);
-   if (returnstatus == -1) {
-      printf("Unable to create pipe\n");
-      return 1;
-   }
-   writeProcess = fork();
-   
-   // Child process
-   if (writeProcess == 0) {
-
+void run_child(int pipefds[]) {
     struct timespec wStart, wStop;
     clock_gettime(CLOCK_MONOTONIC, &wStart);
     write(pipefds[1], content, contentLen);
@@ -35,10 +20,13 @@ int main() {
     fprintf(result,"(1w %ld %ld)\n", wStart.tv_sec, wStart.tv_nsec);
     fprintf(result,"(2w %ld %ld)\n", wStop.tv_sec, wStop.tv_nsec);
     fclose(result);
+}
 
-   } else {
-     //Parent process
+void run_parent(int pipefds[]) {
+    //Parent process
     struct timespec rStart, rStop;
+    char buf[contentLen];
+
     clock_gettime(CLOCK_MONOTONIC, &rStart);
     read(pipefds[0], buf, contentLen);
     clock_gettime(CLOCK_MONOTONIC, &rStop);
@@ -49,13 +37,31 @@ int main() {
         // ghi ket qua
         FILE* result = fopen(resultFile,"a+");
         fprintf(result,"(1r %ld %ld)\n", rStart.tv_sec, rStart.tv_nsec);
-        fprintf(result,"(1r %ld %ld)\n", rStop.tv_sec, rStop.tv_nsec);
+        fprintf(result,"(2r %ld %ld)\n", rStop.tv_sec, rStop.tv_nsec);
         fclose(result);
     } else {
         FILE* result = fopen(resultFile,"a+");
         fprintf(result,"doc sai \n");
         fclose(result);
     }
+}
+
+int main() {
+   int pipefds[2];
+   int returnstatus;
+   int writeProcess;
+
+   returnstatus = pipe(pipefds);
+   if (returnstatus == -1) {
+      printf("Unable to create pipe\n");
+      return 1;
+   }
+   writeProcess = fork();
+   
+   if (writeProcess == 0) {
+    run_child(pipefds);
+   } else {
+    run_parent(pipefds);
    }
    return 0;
 }
