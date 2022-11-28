@@ -67,27 +67,26 @@ int main(int argc, char *argv[]) {
 
         // ghi lai ket qua
         FILE* result = fopen(resultFile,"a+");
-        fprintf(result,"Time process 1 start write to file: %ld second + %ld nanosecond \n", wStart.tv_sec, wStart.tv_nsec);
-        fprintf(result,"Time process 1 stop write to file: %ld second + %ld nanosecond \n\n", wStop.tv_sec, wStop.tv_nsec);
+        fprintf(result,"(1w %ld %ld)\n", wStart.tv_sec, wStart.tv_nsec);
+        fprintf(result,"(2w %ld %ld)\n", wStop.tv_sec, wStop.tv_nsec);
         fclose(result);
+
         
     } else if (writeProcess == 0) {
         // thuc hien doc file trong process con
         clock_gettime(CLOCK_MONOTONIC, &rStart);
-        readStringToFIle(argv[1],buf);
+
+        do {
+            readStringToFIle(argv[1],buf);
+        } while (strcmp(buf, content) != 0);
+
         clock_gettime(CLOCK_MONOTONIC, &rStop);
 
-        if (strcmp(buf, content) == 0) {
-            // ghi ket qua
-            FILE* result = fopen(resultFile,"a+");
-            fprintf(result,"Time process 2 start read from file: %ld second + %ld nanosecond \n", rStart.tv_sec, rStart.tv_nsec);
-            fprintf(result,"Time process 2 stop read from file: %ld second + %ld nanosecond \n\n", rStop.tv_sec, rStop.tv_nsec);
-            fclose(result);
-        } else {
-            FILE* result = fopen(resultFile,"a+");
-            fprintf(result,"doc sai \n\n");
-            fclose(result);
-        }
+        // ghi ket qua
+        FILE* result = fopen(resultFile,"a+");
+        fprintf(result,"(1r %ld %ld)\n", rStart.tv_sec, rStart.tv_nsec);
+        fprintf(result,"(2r %ld %ld)\n", rStop.tv_sec, rStop.tv_nsec);
+        fclose(result);
     } else {
         return -1;
     }
