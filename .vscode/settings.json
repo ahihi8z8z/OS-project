@@ -3,6 +3,7 @@
         "sysinfo.h": "c",
         "unistd.h": "c",
         "readproc.h": "c",
-        "stat.h": "c"
+        "stat.h": "c",
+        "cstdlib": "c"
     }
 }

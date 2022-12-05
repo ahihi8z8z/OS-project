@@ -74,34 +74,32 @@ void run_parent(pid_t pid)
     struct rusage usage;
 	char buf[contentLen];
 
+    clock_gettime(CLOCK_MONOTONIC, &rStart);
 	while (true)
 	{
 		pthread_mutex_lock(&data->mutex);
 		if (data->done) {
-			clock_gettime(CLOCK_MONOTONIC, &rStart);
 			memcpy(buf, data->message, contentLen);
-			clock_gettime(CLOCK_MONOTONIC, &rStop);
-
-            getrusage(RUSAGE_SELF,&usage);
-
-            if (strcmp(buf, content) == 0) {
-                // ghi ket qua
-                FILE* result = fopen(resultFile1,"a+");
-                fprintf(result,"(1r %ld %ld)\n", rStart.tv_sec, rStart.tv_nsec);
-                fprintf(result,"(2r %ld %ld)\n", rStop.tv_sec, rStop.tv_nsec);
-                fprintf(result,"(3r %ld)\n", usage.ru_maxrss);
-                fclose(result);
-            } else {
-                FILE* result = fopen(resultFile1,"a+");
-                fprintf(result,"doc sai \n");
-                fclose(result);
-            }
-
 			pthread_mutex_unlock(&data->mutex);
+            clock_gettime(CLOCK_MONOTONIC, &rStop);
+            getrusage(RUSAGE_SELF,&usage);
 			break;
 		}
 		pthread_mutex_unlock(&data->mutex);
 	}
+
+    if (strcmp(buf, content) == 0) {
+        // ghi ket qua
+        FILE* result = fopen(resultFile1,"a+");
+        fprintf(result,"(1r %ld %ld)\n", rStart.tv_sec, rStart.tv_nsec);
+        fprintf(result,"(2r %ld %ld)\n", rStop.tv_sec, rStop.tv_nsec);
+        fprintf(result,"(3r %ld)\n", usage.ru_maxrss);
+        fclose(result);
+    } else {
+        FILE* result = fopen(resultFile1,"a+");
+        fprintf(result,"doc sai \n");
+        fclose(result);
+    }
 
     // waitpid(pid, NULL, WNOHANG);
 }
